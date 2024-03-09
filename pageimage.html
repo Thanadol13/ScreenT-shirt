@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ปรับขนาดรูปภาพและแสดงรูปจากเครื่องคอม</title>
+    <style>
+        /* CSS เพื่อสร้าง box */
+        .image-container {
+            width: 11.34cm; /* กำหนดความกว้างของ box ให้เป็น 300px */
+            height: 11.34cm; /* กำหนดความสูงของ box ให้เป็น 300px */
+            border: 1px solid black; /* กำหนดเส้นขอบสีดำ */
+            overflow: hidden; /* กำหนดให้รูปภาพที่เกินขนาดจะไม่แสดง */
+            position: relative; /* กำหนดให้เป็นตำแหน่งเริ่มต้นสำหรับรูปภาพ */
+        }
+
+        .image-container img {
+            width: 100%; /* กำหนดให้รูปภาพมีขนาดเต็มขอบของ box */
+            height: auto; /* กำหนดให้ความสูงของรูปภาพปรับตามอัตราส่วนของภาพ */
+            display: block; /* กำหนดให้รูปภาพเป็น block element */
+            position: absolute; /* กำหนดให้รูปภาพสามารถเคลื่อนไหวได้ */
+        }
+
+        .draggable {
+            position: absolute; /* กำหนดให้ element เป็น absolute position */
+            cursor: pointer; /* กำหนดให้ cursor เป็น pointer เมื่อชี้ที่ element */
+        }
+    </style>
+</head>
+<body>
+
+<!-- สร้าง box สำหรับรูปภาพ -->
+<div class="image-container">
+    <img id="image" src="path/to/image.jpg" alt="รูปภาพ">
+    <!-- เพิ่ม input element แบบ text ที่สามารถเคลื่อนย้ายได้ -->
+    <input type="text" id="draggableText" class="draggable" style="left: 100px; top: 100px;" value="ข้อความที่เคลื่อนย้ายได้">
+</div>
+
+<!-- สร้าง input element แบบ range เพื่อปรับขนาดของรูปภาพ -->
+<label for="widthRange">ความกว้าง:</label>
+<input type="range" id="widthRange" min="0" max="100" value="0">
+<br>
+<label for="heightRange">ความสูง:</label>
+<input type="range" id="heightRange" min="0" max="100" value="0">
+
+<!-- สร้าง input element แบบ file เพื่อให้ผู้ใช้เลือกรูปภาพ -->
+<input type="file" id="fileInput">
+
+<!-- แสดงขนาดรูปภาพในรูปแบบข้อความ -->
+<div id="imageSize"></div>
+
+<!-- เพิ่ม input element แบบ color เพื่อให้ผู้ใช้เลือกสีของข้อความ -->
+<label for="textColor">สีของข้อความ:</label>
+<input type="color" value="#000000" onchange="changeTextColor()" id="textColor" style="width: 100px;">
+
+<script>
+    // เลือก input element ที่มี id เป็น "image"
+    const image = document.getElementById('image');
+
+    // เลือก input elements สำหรับความกว้างและความสูง
+    const widthRange = document.getElementById('widthRange');
+    const heightRange = document.getElementById('heightRange');
+
+    // เลือก element ที่มี id เป็น "imageSize" เพื่อแสดงขนาดรูปภาพ
+    const imageSize = document.getElementById('imageSize');
+
+    // ฟังก์ชันสำหรับการแสดงขนาดรูปภาพ
+    function displayImageSize() {
+        const width = (widthRange.value * 0.378).toFixed(2); // ค่าความกว้างที่เลือก
+        const height = (heightRange.value * 0.378).toFixed(2); // ค่าความสูงที่เลือก
+
+        // แสดงขนาดรูปภาพในรูปแบบข้อความ
+        imageSize.textContent = `ความกว้าง: ${width} cm, ความสูง: ${height} cm`;
+    }
+
+    // ฟังก์ชันสำหรับการปรับขนาดรูปภาพ
+    function resizeImage() {
+        const width = widthRange.value; // ค่าความกว้างที่เลือก
+        const height = heightRange.value; // ค่าความสูงที่เลือก
+        image.style.width = `${width}%`; // ปรับความกว้างของรูปภาพ
+        image.style.height = `${height}%`; // ปรับความสูงของรูปภาพ
+    }
+
+    // เมื่อมีการเปลี่ยนแปลงค่าของ input elements
+    widthRange.addEventListener('input', () => {
+        resizeImage();
+        displayImageSize();
+    });
+    heightRange.addEventListener('input', () => {
+        resizeImage();
+        displayImageSize();
+    });
+
+    // เลือก input element ที่มี id เป็น "fileInput"
+    const fileInput = document.getElementById('fileInput');
+
+    // เมื่อมีการเลือกไฟล์
+    fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0]; // เลือกไฟล์แรกที่ถูกเลือก
+
+        // สร้าง object URL ของไฟล์
+        const imageURL = URL.createObjectURL(file);
+
+        // กำหนด URL ของรูปภาพให้กับ src attribute
+        image.src = imageURL;
+
+        // เรียกใช้งานฟังก์ชัน resizeImage เพื่อตั้งค่าเริ่มต้น
+        resizeImage();
+
+        // ตั้งค่าขนาดเริ่มต้นของรูปภาพ
+        image.onload = function() {
+            const naturalWidth = image.naturalWidth; // ความกว้างของรูปภาพ
+            const naturalHeight = image.naturalHeight; // ความสูงของรูปภาพ
+            const width = naturalWidth * 0.5; // กำหนดความกว้างเริ่มต้นโดยประมาณเป็นครึ่งของความกว้างจริง
+            const height = naturalHeight * 0.5; // กำหนดความสูงเริ่มต้นโดยประมาณเป็นครึ่งของความสูงจริง
+            widthRange.value = (width / naturalWidth) * 100; // ปรับค่า input range ของความกว้างให้ตรงกับขนาดเริ่มต้น
+            heightRange.value = (height / naturalHeight) * 100; // ปรับค่า input range ของความสูงให้ตรงกับขนาดเริ่มต้น
+            displayImageSize(); // แสดงขนาดรูปภาพเริ่มต้น
+        };
+    });
+
+    // เรียกใช้งานฟังก์ชัน displayImageSize เพื่อตั้งค่าเริ่มต้น
+    displayImageSize();
+
+    // เลือก input element ที่มี id เป็น "draggableText"
+    const draggableText = document.getElementById('draggableText');
+
+    // เพิ่ม event listener เมื่อคลิกที่ input element เพื่อเริ่มการลากและวาง
+    draggableText.addEventListener('mousedown', startDragging);
+
+    // ฟังก์ชันสำหรับเริ่มการลากและวาง
+    function startDragging(event) {
+        // กำหนดตำแหน่งเริ่มต้นของการลาก
+        const startX = event.clientX - draggableText.getBoundingClientRect().left;
+        const startY = event.clientY - draggableText.getBoundingClientRect().top;
+
+        // เพิ่ม event listener เมื่อมีการเลื่อนเมาส์
+        document.addEventListener('mousemove', drag);
+        // เพิ่ม event listener เมื่อมีการปล่อยเมาส์
+        document.addEventListener('mouseup', stopDragging);
+
+        // ฟังก์ชันสำหรับการลาก
+        function drag(event) {
+            // คำนวณตำแหน่งใหม่ของ input element ตามตำแหน่งของเมาส์
+            let newPosX = event.clientX - startX;
+            let newPosY = event.clientY - startY;
+
+            // ตรวจสอบว่าตำแหน่งใหม่อยู่ในขอบเขตของกล่องรูปภาพหรือไม่
+            newPosX = Math.min(Math.max(newPosX, 0), image.clientWidth - draggableText.offsetWidth);
+            newPosY = Math.min(Math.max(newPosY, 0), image.clientHeight - draggableText.offsetHeight);
+
+            // กำหนดตำแหน่งใหม่ให้กับ input element
+            draggableText.style.left = `${newPosX}px`;
+            draggableText.style.top = `${newPosY}px`;
+        }
+
+        // ฟังก์ชันสำหรับการหยุดการลากเมื่อปล่อยเมาส์
+        function stopDragging() {
+            // ลบ event listener ที่ถูกเพิ่มไว้เมื่อมีการเลื่อนเมาส์และปล่อยเมาส์
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDragging);
+        }
+    }
+
+    // ฟังก์ชันสำหรับเปลี่ยนสีของข้อความ
+    function changeTextColor() {
+        const textColor = document.getElementById('textColor').value;
+        draggableText.style.color = textColor;
+    }
+</script>
+
+</body>
+</html>
